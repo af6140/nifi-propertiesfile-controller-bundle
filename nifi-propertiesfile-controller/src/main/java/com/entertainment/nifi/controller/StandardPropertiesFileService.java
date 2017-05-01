@@ -3,6 +3,7 @@ package com.entertainment.nifi.controller;
 import com.entertainment.nifi.controller.PropertiesFileService;
 import org.apache.nifi.annotation.documentation.CapabilityDescription;
 import org.apache.nifi.annotation.documentation.Tags;
+import org.apache.nifi.annotation.lifecycle.OnDisabled;
 import org.apache.nifi.annotation.lifecycle.OnEnabled;
 import org.apache.nifi.components.PropertyDescriptor;
 import org.apache.nifi.controller.AbstractControllerService;
@@ -92,6 +93,12 @@ public class StandardPropertiesFileService extends AbstractControllerService imp
         FilesWatcherWorker reloadTask = new FilesWatcherWorker();
         executor.scheduleWithFixedDelay(reloadTask, 0, reloadIntervalMilli, TimeUnit.MILLISECONDS);
 
+    }
+
+    @OnDisabled
+    public void shutDown() {
+        log.info("Stopping properties file service");
+        executor.shutdownNow();
     }
 
     protected void loadPropertiesFiles(){
