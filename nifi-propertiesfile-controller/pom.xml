@@ -19,7 +19,7 @@
     <parent>
         <groupId>com.entertainment</groupId>
         <artifactId>nifi-propertiesfile-controller-bundle</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>1.2.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>nifi-propertiesfile-controller</artifactId>
@@ -29,7 +29,7 @@
         <dependency>
             <groupId>com.entertainment</groupId>
             <artifactId>nifi-propertiesfile-controller-api</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>1.2.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.apache.nifi</groupId>
