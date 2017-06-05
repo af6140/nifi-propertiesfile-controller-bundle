@@ -102,7 +102,7 @@ public class StandardPropertiesFileService extends AbstractControllerService imp
     }
 
     protected void loadPropertiesFiles(){
-        log.info("Starting loading properties files. (" + configUri + ")");
+        log.info("Start loading properties files from (" + configUri + ")");
         File[] propFiles = new File[1];
 
         lock.readLock().lock();
@@ -137,6 +137,7 @@ public class StandardPropertiesFileService extends AbstractControllerService imp
             for(File entry : propFiles){
                 BufferedInputStream in = new BufferedInputStream(new FileInputStream(entry));
                 String entry_name = entry.toPath().getFileName().toString();
+                log.info("Start loading " + entry_name);
                 String only_name = entry_name.replace(".properties", "");
                 if(properties.containsKey(only_name)) {
                     Properties currentProperties = properties.get(only_name);
@@ -164,6 +165,7 @@ public class StandardPropertiesFileService extends AbstractControllerService imp
                 log.info("Check file watcher");
                 if(fileWatcher.checkAndReset()){
                     //log.error("I found a change?");
+                    log.info("Properties file change found");
                     loadPropertiesFiles();
                 }
             } catch (IOException e) {
@@ -176,6 +178,7 @@ public class StandardPropertiesFileService extends AbstractControllerService imp
         lock.readLock().lock();
         try{
             Properties scopeProperties= properties.get(scope);
+            log.info("Looking up property {} in scope {}", new Object[]{scope, key});
             if (scopeProperties!=null) {
                 return scopeProperties.getProperty(key);
             }else {
