@@ -80,7 +80,7 @@ public class EncryptedPropertiesFileService extends StandardPropertiesFileServic
 
     @OnEnabled
     @Override
-    public void onConfigured(final ConfigurationContext context) throws InitializationException {
+    public void onEnabled(final ConfigurationContext context) {
         if (this.ecryptedProperties ==null ) {
             this.ecryptedProperties=new ArrayList<String>();
             String encryptedPropertiesConfigured = context.getProperty(ENCRYPTED_PROPERTIES).getValue();
@@ -96,7 +96,7 @@ public class EncryptedPropertiesFileService extends StandardPropertiesFileServic
             PrivateKey privateKey = CryptoUtil.loadPrivatekey(keyPath, keyPass);
             this.privateKey = privateKey;
         }
-        super.onConfigured(context);
+        super.onEnabled(context);
     }
 
 }

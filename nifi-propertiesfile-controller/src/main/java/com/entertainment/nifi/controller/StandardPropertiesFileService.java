@@ -1,6 +1,7 @@
 package com.entertainment.nifi.controller;
 
 import com.entertainment.nifi.controller.PropertiesFileService;
+import com.entertainment.nifi.controller.util.DirectoryUpdateMonitor;
 import org.apache.nifi.annotation.documentation.CapabilityDescription;
 import org.apache.nifi.annotation.documentation.Tags;
 import org.apache.nifi.annotation.lifecycle.OnDisabled;
@@ -21,6 +22,7 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -79,7 +81,7 @@ public class StandardPropertiesFileService extends AbstractControllerService imp
     }
 
     @OnEnabled
-    public void onConfigured(final ConfigurationContext context) throws InitializationException {
+    public void onEnabled(final ConfigurationContext context) {
         log.info("Starting properties file service");
         configUri = context.getProperty(CONFIG_URI).getValue();
         reloadIntervalMilli = context.getProperty(RELOAD_INTERVAL).asTimePeriod(TimeUnit.MILLISECONDS);
@@ -88,17 +90,28 @@ public class StandardPropertiesFileService extends AbstractControllerService imp
         log.debug("Loading properties");
         loadPropertiesFiles();
 
-        fileWatcher = new SynchronousFileWatcher(Paths.get(configUri), new LastModifiedMonitor());
+        fileWatcher = new SynchronousFileWatcher(Paths.get(configUri), new DirectoryUpdateMonitor());
         executor = Executors.newSingleThreadScheduledExecutor();
         FilesWatcherWorker reloadTask = new FilesWatcherWorker();
-        executor.scheduleWithFixedDelay(reloadTask, 0, reloadIntervalMilli, TimeUnit.MILLISECONDS);
+        executor.scheduleWithFixedDelay(reloadTask, reloadIntervalMilli, reloadIntervalMilli, TimeUnit.MILLISECONDS);
 
     }
 
     @OnDisabled
-    public void shutDown() {
+    public void onDisabled() {
         log.info("Stopping properties file service");
-        executor.shutdownNow();
+        if(executor!=null) {
+            executor.shutdown();
+            try {
+                executor.awaitTermination(2, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }finally {
+                if(!executor.isTerminated()) {
+                    executor.shutdownNow();
+                }
+            }
+        }
     }
 
     protected void loadPropertiesFiles(){
@@ -132,7 +145,7 @@ public class StandardPropertiesFileService extends AbstractControllerService imp
 
         lock.writeLock().lock();
         try{
-            log.info("Start loading");
+            log.info("Start loading properties");
             // Clear all properties
             for(File entry : propFiles){
                 BufferedInputStream in = new BufferedInputStream(new FileInputStream(entry));
@@ -178,10 +191,11 @@ public class StandardPropertiesFileService extends AbstractControllerService imp
         lock.readLock().lock();
         try{
             Properties scopeProperties= properties.get(scope);
-            log.info("Looking up property {} in scope {}", new Object[]{scope, key});
+            log.info("Looking up property {} in scope {}", new Object[]{key, scope});
             if (scopeProperties!=null) {
                 return scopeProperties.getProperty(key);
             }else {
+                log.warn("Scope " + scope + " not found!");
                 return null;
             }
         }finally{
