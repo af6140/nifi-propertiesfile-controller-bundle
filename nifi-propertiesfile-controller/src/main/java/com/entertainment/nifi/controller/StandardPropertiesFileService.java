@@ -89,8 +89,10 @@ public class StandardPropertiesFileService extends AbstractControllerService imp
         // Initialize the properties
         log.debug("Loading properties");
         loadPropertiesFiles();
-
+        //it's really a state comparator, no magic, synchronous calls, no threads here
+        // path may change, so we need create one
         fileWatcher = new SynchronousFileWatcher(Paths.get(configUri), new DirectoryUpdateMonitor());
+        //recreate executor
         executor = Executors.newSingleThreadScheduledExecutor();
         FilesWatcherWorker reloadTask = new FilesWatcherWorker();
         executor.scheduleWithFixedDelay(reloadTask, reloadIntervalMilli, reloadIntervalMilli, TimeUnit.MILLISECONDS);
@@ -111,6 +113,7 @@ public class StandardPropertiesFileService extends AbstractControllerService imp
                     executor.shutdownNow();
                 }
             }
+            executor=null;
         }
     }
 
