@@ -39,6 +39,10 @@ public class TestStandardPropertiesFileService {
         runner.enableControllerService(service);
         String value = service.getProperty("test", "password");
         assert value!=null;
+
+        String key = service.getProperty("test", "key");
+        assert key!=null;
+        assert  key.contains("testkey");
         runner.assertValid(service);
     }
 
